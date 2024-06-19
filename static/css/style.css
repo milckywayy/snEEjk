@@ -127,3 +127,12 @@ canvas {
     border-radius: 8px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
 }
+
+#game-version {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    color: #FFD630;
+    font-size: 14px;
+    text-shadow: 0 0 10px rgba(255, 214, 48, 0.5);
+}

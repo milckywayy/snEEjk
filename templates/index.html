@@ -38,13 +38,14 @@
 
     <div class="container" id="game-container">
         <h1 id="game-title">{{ game_title }}</h1>
-
         <div class="input-container">
             <input type="text" maxlength="20" id="nickname" placeholder="Enter your nickname">
             <button id="start-button">Start Game</button>
         </div>
 
         <button id="highscores-button" onclick="window.location.href='{{ url_for('highscores_screen') }}'">Show Highscores</button>
+
+        <div id="game-version">{{ game_version }}</div>
 
         <script>
             startSession()

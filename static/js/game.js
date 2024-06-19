@@ -10,7 +10,7 @@ const context = canvas.getContext('2d');
 let tile_size = 20;
 
 const snake_body_color = "#FFD630";
-const snake_head_color = "red";
+const snake_head_color = "#d9ff30";
 const apple_color = "#FF8C00";
 
 let lastFrameTime = 0;
