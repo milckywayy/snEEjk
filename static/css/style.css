@@ -1,0 +1,129 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #1F313F, #283E51);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+body {
+    animation: gradientAnimation 10s ease infinite;
+}
+
+@keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.container {
+    text-align: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.container h1 {
+    color: #FFD630;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 214, 48, 0.5);
+    font-size: 42px;
+}
+
+.container h2 {
+    color: #FFD630;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 214, 48, 0.5);
+    font-size: 24px;
+}
+
+.input-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.input-container input, .input-container button {
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.input-container input {
+    flex: 1;
+    max-width: 200px;
+}
+
+.input-container button {
+    background: #FFD630;
+    color: #1F313F;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.input-container button:hover {
+    background: #FFC107;
+}
+
+#highscores-button {
+    background: #FFD630;
+    color: #1F313F;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
+}
+
+#highscores-button:hover {
+    background: #FFC107;
+}
+
+#scores-container ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    color: white;
+    font-size: 14px;
+}
+
+#scores-container ul li {
+    margin: 1px 0;
+    padding: 1px 0;
+}
+
+#scores-container li {
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px rgba(255, 214, 48, 0.5);
+}
+
+.back-button {
+    background: #FFD630;
+    color: #1F313F;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    margin-top: 10px;
+}
+
+.back-button:hover {
+    background: #FFC107;
+}
+
+canvas {
+    border: 2px solid #FFD630;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}

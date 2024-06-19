@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+
+    <meta charset="UTF-8">
+    <title>{{ game_title }} - highscores</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<body>
+    <div class="container" id="scores-container">
+        <h2>Top 10 Scores</h2>
+
+        <ul id="scores-list">
+            {% for nick, score in scores %}
+                <li>{{ nick }}: {{ score }}</li>
+            {% endfor %}
+        </ul>
+
+        <button id="back-button" class="back-button" onclick="window.location.href='{{ url_for('login_screen') }}'">Back</button>
+
+    </div>
+
+</body>
+</html>
