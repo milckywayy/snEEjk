@@ -23,7 +23,7 @@ if not os.path.exists(app.instance_path):
 DATABASE = os.path.join(app.instance_path, 'scores.db')
 
 GAME_TITLE = 'snEEjk'
-VERSION = 'V2.0.0'
+VERSION = 'V2.0.1'
 
 
 def init_db():
@@ -56,7 +56,7 @@ def hello_screen():
 def highscores_screen():
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT nickname, score FROM scores ORDER BY score DESC LIMIT 10')
+        cursor.execute('SELECT nickname, MAX(score) as score FROM scores GROUP BY nickname ORDER BY score DESC LIMIT 10')
         scores = cursor.fetchall()
     scores = [(nickname.encode('utf-8', errors='replace').decode('utf-8'), score) for nickname, score in scores]
     logger.info("Rendering highscores screen with scores: %s", scores)
