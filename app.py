@@ -7,13 +7,15 @@ import ssl
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit
 from game import game_setup, is_apple_eaten, eat_apple, check_collision, snake_move
+from gevent import pywsgi
+from geventwebsocket.handler import WebSocketHandler
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SNAKE_SECRET_KEY', os.urandom(24))
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode='gevent')
 
 if not os.path.exists(app.instance_path):
     os.makedirs(app.instance_path)
@@ -160,9 +162,8 @@ def save_score(nickname, score, client_ip):
 init_db()
 if __name__ == '__main__':
     logger.info("Starting server")
-    # socketio.run(app, '0.0.0.0', port=5050)
-
     context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
     context.load_cert_chain('fullchain.pem', 'privkey.pem')
 
-    socketio.run(app, host='0.0.0.0', port=5050, ssl_context=context)
+    http_server = pywsgi.WSGIServer(('0.0.0.0', 5050), app, handler_class=WebSocketHandler, ssl_context=context)
+    http_server.serve_forever()
