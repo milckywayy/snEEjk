@@ -11,7 +11,8 @@ from game import game_setup, is_apple_eaten, eat_apple, check_collision, snake_m
 from gevent import pywsgi
 from geventwebsocket.handler import WebSocketHandler
 
-logging.basicConfig(level=logging.INFO)
+# Customize logging format to include the current time
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
@@ -24,7 +25,7 @@ if not os.path.exists(app.instance_path):
 DATABASE = os.path.join(app.instance_path, 'scores.db')
 
 GAME_TITLE = 'snEEjk'
-VERSION = 'V2.0.2'
+VERSION = 'V2.0.3'
 
 
 def init_db():
@@ -34,7 +35,8 @@ def init_db():
         CREATE TABLE IF NOT EXISTS scores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             score INTEGER NOT NULL,
-            nickname VARCHAR(20) NOT NULL
+            nickname VARCHAR(20) NOT NULL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
         """)
         conn.commit()
@@ -57,7 +59,8 @@ def hello_screen():
 def highscores_screen():
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
-        cursor.execute('SELECT nickname, MAX(score) as score FROM scores GROUP BY nickname ORDER BY score DESC LIMIT 10')
+        cursor.execute(
+            'SELECT nickname, MAX(score) as score FROM scores GROUP BY nickname ORDER BY score DESC LIMIT 10')
         scores = cursor.fetchall()
     scores = [(nickname.encode('utf-8', errors='replace').decode('utf-8'), score) for nickname, score in scores]
     logger.info("Rendering highscores screen with scores: %s", scores)
@@ -74,6 +77,7 @@ def start_session():
         return jsonify({'status': 'error', 'message': 'Invalid nickname'}), 400
 
     session['nickname'] = nickname
+    session['invalid_score'] = False
     logger.info("Session started for nickname: %s(%s)", nickname, client_ip)
     return jsonify({'status': 'success'}), 200
 
@@ -97,6 +101,7 @@ def setup_for(event):
     session['score'] = score
     session['tile_map_size'] = map_size
     session['start_time'] = datetime.now().timestamp()
+    session['last_event_time'] = datetime.now().timestamp() - 0.1
     logger.info("Game setup for event '%s' with nickname '%s(%s)'", event, nickname, client_ip)
     emit(event, {
         'valid_nickname': nickname,
@@ -126,6 +131,16 @@ def handle_disconnect():
 @socketio.on('game_event')
 def handle_game_event(data):
     client_ip = request.remote_addr
+    current_event_time = datetime.now().timestamp()
+    last_event_time = session.get('last_event_time', 0)
+
+    if current_event_time - last_event_time < 0.05:
+        logger.warning("Rapid event detected for nickname: %s(%s). Marking session for invalid scoring.",
+                       session['nickname'], client_ip)
+        session['invalid_score'] = True
+
+    session['last_event_time'] = current_event_time
+
     if data['type'] == 'MOVE':
         snake = session['snake']
         apple = session['apple']
@@ -149,7 +164,8 @@ def handle_game_event(data):
             session['score'] += 1
             new_apple = eat_apple(snake)
             session['apple'] = new_apple
-            logger.info("Apple eaten by nickname: %s(%s), new score: %d", session['nickname'], client_ip, session['score'])
+            logger.info("Apple eaten by nickname: %s(%s), new score: %d", session['nickname'], client_ip,
+                        session['score'])
             emit('apple_eaten', {'apple_update': new_apple, 'new_score': session['score']})
 
         # Update snake position
@@ -158,8 +174,9 @@ def handle_game_event(data):
 
 
 def save_score(nickname, score, duration, client_ip):
-    if duration < score:
-        logger.warning("Possible cheating detected for nickname: %s(%s). Score: %d, Duration: %.2f", nickname, client_ip, score, duration)
+    if session.get('invalid_score', False) or duration < score:
+        logger.warning("Possible cheating detected for nickname: %s(%s). Score: %d, Duration: %.2f", nickname,
+                       client_ip, score, duration)
         return
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
