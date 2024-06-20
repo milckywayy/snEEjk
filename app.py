@@ -3,6 +3,7 @@ import re
 import sqlite3
 import logging
 import ssl
+from datetime import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit
@@ -95,6 +96,7 @@ def setup_for(event):
     session['apple'] = apple
     session['score'] = score
     session['tile_map_size'] = map_size
+    session['start_time'] = datetime.now().timestamp()
     logger.info("Game setup for event '%s' with nickname '%s(%s)'", event, nickname, client_ip)
     emit(event, {
         'valid_nickname': nickname,
@@ -131,15 +133,16 @@ def handle_game_event(data):
 
         if check_collision(snake):
             logger.info("Collision detected for nickname: %s(%s)", session['nickname'], client_ip)
-            save_score(session['nickname'], session['score'], client_ip)
+            end_time = datetime.now().timestamp()
+            duration = end_time - session['start_time']
+            save_score(session['nickname'], session['score'], duration, client_ip)
             setup_for('lost')
             return
 
         snake_move(snake, new_head)
 
         if is_apple_eaten(new_head, apple):
-            if session['score'] == 396: # the limit is 396 + snake body(4) == 400
-                save_score(session['nickname'], session['score'], client_ip)
+            if session['score'] > 390:  # For cheaters
                 setup_for('lost')
                 return
 
@@ -154,14 +157,17 @@ def handle_game_event(data):
         emit('snake_update', {'snake_head_update': snake[0]})
 
 
-def save_score(nickname, score, client_ip):
+def save_score(nickname, score, duration, client_ip):
+    if duration < score:
+        logger.warning("Possible cheating detected for nickname: %s(%s). Score: %d, Duration: %.2f", nickname, client_ip, score, duration)
+        return
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO scores (nickname, score) VALUES (?, ?)
         ''', (nickname, score))
         conn.commit()
-    logger.info("Score saved for: %s(%s), score: %d", nickname, client_ip, score)
+    logger.info("Score saved for: %s(%s), score: %d, duration: %.2f", nickname, client_ip, score, duration)
 
 
 init_db()
