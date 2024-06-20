@@ -25,7 +25,7 @@ if not os.path.exists(app.instance_path):
 DATABASE = os.path.join(app.instance_path, 'scores.db')
 
 GAME_TITLE = 'snEEjk'
-VERSION = 'V2.0.4'
+VERSION = 'V2.0.5'
 
 
 def init_db():
@@ -35,8 +35,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS scores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             score INTEGER NOT NULL,
-            nickname VARCHAR(20) NOT NULL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            nickname VARCHAR(20) NOT NULL
         )
         """)
         conn.commit()
@@ -78,6 +77,7 @@ def start_session():
 
     session['nickname'] = nickname
     session['invalid_score'] = False
+    session['rapid_event_logged'] = False  # Initialize flag for rapid event logging
     logger.info("Session started for nickname: %s(%s)", nickname, client_ip)
     return jsonify({'status': 'success'}), 200
 
@@ -101,7 +101,7 @@ def setup_for(event):
     session['score'] = score
     session['tile_map_size'] = map_size
     session['start_time'] = datetime.now().timestamp()
-    session['last_event_time'] = datetime.now().timestamp() - 0.1
+    session['last_event_time'] = datetime.now().timestamp() - 1.0
     logger.info("Game setup for event '%s' with nickname '%s(%s)'", event, nickname, client_ip)
     emit(event, {
         'valid_nickname': nickname,
@@ -134,9 +134,11 @@ def handle_game_event(data):
     current_event_time = datetime.now().timestamp()
     last_event_time = session.get('last_event_time', 0)
 
-    if not session['invalid_score'] and current_event_time - last_event_time < 0.05:
-        logger.warning("Rapid event detected for nickname: %s(%s). Marking session for invalid scoring.",
-                       session['nickname'], client_ip)
+    if current_event_time - last_event_time < 0.04:
+        if not session['rapid_event_logged']:
+            logger.warning("Rapid event detected for nickname: %s(%s). Marking session for invalid scoring. %f",
+                           session['nickname'], client_ip, current_event_time - last_event_time)
+            session['rapid_event_logged'] = True
         session['invalid_score'] = True
 
     session['last_event_time'] = current_event_time
@@ -184,7 +186,7 @@ def save_score(nickname, score, duration, client_ip):
             INSERT INTO scores (nickname, score) VALUES (?, ?)
         ''', (nickname, score))
         conn.commit()
-    logger.info("Score saved for: %s(%s), score: %d, duration: %.2f", nickname, client_ip, score, duration)
+    logger.info("Score saved for: %s(%s), score: %d", nickname, client_ip, score)
 
 
 init_db()
