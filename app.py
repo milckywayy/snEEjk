@@ -25,7 +25,7 @@ if not os.path.exists(app.instance_path):
 DATABASE = os.path.join(app.instance_path, 'scores.db')
 
 GAME_TITLE = 'snEEjk'
-VERSION = 'V2.0.3'
+VERSION = 'V2.0.4'
 
 
 def init_db():
@@ -134,7 +134,7 @@ def handle_game_event(data):
     current_event_time = datetime.now().timestamp()
     last_event_time = session.get('last_event_time', 0)
 
-    if current_event_time - last_event_time < 0.05:
+    if not session['invalid_score'] and current_event_time - last_event_time < 0.05:
         logger.warning("Rapid event detected for nickname: %s(%s). Marking session for invalid scoring.",
                        session['nickname'], client_ip)
         session['invalid_score'] = True
