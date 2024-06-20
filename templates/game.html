@@ -1,13 +1,20 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
     <meta charset="UTF-8">
     <title>{{ game_title }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+
 </head>
 <body>
+    <button id="inGameBackButton" class="back-button" onclick="window.location.href='{{ url_for('login_screen') }}'">Exit game</button>
+
     <canvas id="game"></canvas>
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
+
+    <div id="game-version">{{ game_version }}</div>
+
 </body>
 </html>

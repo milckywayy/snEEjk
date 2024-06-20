@@ -136,3 +136,20 @@ canvas {
     font-size: 14px;
     text-shadow: 0 0 10px rgba(255, 214, 48, 0.5);
 }
+
+#info {
+    display: flex;
+    justify-content: center;
+    gap: 50px;
+    margin-bottom: 10px;
+}
+
+#info div {
+    font-size: 18px;
+}
+
+#inGameBackButton {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+}

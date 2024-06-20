@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ game_title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <div class="container" id="game-container" style="padding:50px">
+        <h1 id="game-title">{{ game_title }}</h1>
+        <button id="highscores-button" onclick="window.open('{{ url_for('login_screen') }}', '_blank')">Play now</button>
+    </div>
+
+    <div id="game-version">{{ game_version }}</div>
+
+</body>
+</html>

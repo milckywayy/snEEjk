@@ -2,6 +2,8 @@ import os
 import re
 import sqlite3
 import logging
+import ssl
+
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit
 from game import game_setup, is_apple_eaten, eat_apple, check_collision, snake_move
@@ -42,6 +44,12 @@ def login_screen():
     return render_template('index.html', game_title=GAME_TITLE, game_version=VERSION)
 
 
+@app.route('/hellopage')
+def hello_screen():
+    logger.info("Rendering hello screen")
+    return render_template('hellopage.html', game_title=GAME_TITLE, game_version=VERSION)
+
+
 @app.route('/highscores')
 def highscores_screen():
     with sqlite3.connect(DATABASE) as conn:
@@ -50,7 +58,7 @@ def highscores_screen():
         scores = cursor.fetchall()
     scores = [(nickname.encode('utf-8', errors='replace').decode('utf-8'), score) for nickname, score in scores]
     logger.info("Rendering highscores screen with scores: %s", scores)
-    return render_template('highscores.html', game_title=GAME_TITLE, scores=scores)
+    return render_template('highscores.html', game_title=GAME_TITLE, scores=scores, game_version=VERSION)
 
 
 @app.route('/start_session', methods=['POST'])
@@ -73,7 +81,7 @@ def game_screen():
         logger.warning("Attempt to access game screen without valid session from IP: %s", request.remote_addr)
         return redirect(url_for('login_screen'))
     logger.info("Rendering game screen for nickname: %s(%s)", session['nickname'], request.remote_addr)
-    return render_template('game.html', game_title=GAME_TITLE)
+    return render_template('game.html', game_title=GAME_TITLE, game_version=VERSION)
 
 
 def setup_for(event):
@@ -152,4 +160,9 @@ def save_score(nickname, score, client_ip):
 init_db()
 if __name__ == '__main__':
     logger.info("Starting server")
-    socketio.run(app, '0.0.0.0', port=5050)
+    # socketio.run(app, '0.0.0.0', port=5050)
+
+    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    context.load_cert_chain('fullchain.pem', 'privkey.pem')
+
+    socketio.run(app, host='0.0.0.0', port=5050, ssl_context=context)
