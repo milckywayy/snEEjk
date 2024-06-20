@@ -24,7 +24,7 @@ if not os.path.exists(app.instance_path):
 DATABASE = os.path.join(app.instance_path, 'scores.db')
 
 GAME_TITLE = 'snEEjk'
-VERSION = 'V2.0.1'
+VERSION = 'V2.0.2'
 
 
 def init_db():
