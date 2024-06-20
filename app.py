@@ -138,6 +138,11 @@ def handle_game_event(data):
         snake_move(snake, new_head)
 
         if is_apple_eaten(new_head, apple):
+            if session['score'] == 396: # the limit is 396 + snake body(4) == 400
+                save_score(session['nickname'], session['score'], client_ip)
+                setup_for('lost')
+                return
+
             session['score'] += 1
             new_apple = eat_apple(snake)
             session['apple'] = new_apple
