@@ -136,7 +136,7 @@ def handle_game_event(data):
     current_event_time = datetime.now().timestamp()
     last_event_time = session.get('last_event_time', 0)
 
-    if current_event_time - last_event_time < 0.04:
+    if session['start_time'] > 1 and current_event_time - last_event_time < 0.04:
         if not session['rapid_event_logged']:
             logger.warning("Rapid event detected for nickname: %s(%s). Marking session for invalid scoring. %f",
                            session['nickname'], client_ip, current_event_time - last_event_time)
