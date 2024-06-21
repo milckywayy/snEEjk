@@ -102,6 +102,8 @@ def setup_for(event):
     session['tile_map_size'] = map_size
     session['start_time'] = datetime.now().timestamp()
     session['last_event_time'] = datetime.now().timestamp() - 1.0
+    session['invalid_score'] = False
+    session['rapid_event_logged'] = False
     logger.info("Game setup for event '%s' with nickname '%s(%s)'", event, nickname, client_ip)
     emit(event, {
         'valid_nickname': nickname,
