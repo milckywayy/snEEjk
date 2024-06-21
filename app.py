@@ -77,7 +77,7 @@ def start_session():
 
     session['nickname'] = nickname
     session['invalid_score'] = False
-    session['rapid_event_logged'] = False  # Initialize flag for rapid event logging
+    session['apple_times'] = []  # Initialize list for apple collection times
     logger.info("Session started for nickname: %s(%s)", nickname, client_ip)
     return jsonify({'status': 'success'}), 200
 
@@ -101,9 +101,8 @@ def setup_for(event):
     session['score'] = score
     session['tile_map_size'] = map_size
     session['start_time'] = datetime.now().timestamp()
-    session['last_event_time'] = datetime.now().timestamp() - 1.0
+    session['apple_times'] = []
     session['invalid_score'] = False
-    session['rapid_event_logged'] = False
     logger.info("Game setup for event '%s' with nickname '%s(%s)'", event, nickname, client_ip)
     emit(event, {
         'valid_nickname': nickname,
@@ -134,16 +133,6 @@ def handle_disconnect():
 def handle_game_event(data):
     client_ip = request.remote_addr
     current_event_time = datetime.now().timestamp()
-    last_event_time = session.get('last_event_time', 0)
-
-    if session['start_time'] > 1 and current_event_time - last_event_time < 0.04:
-        if not session['rapid_event_logged']:
-            logger.warning("Rapid event detected for nickname: %s(%s). Marking session for invalid scoring. %f",
-                           session['nickname'], client_ip, current_event_time - last_event_time)
-            session['rapid_event_logged'] = True
-        session['invalid_score'] = True
-
-    session['last_event_time'] = current_event_time
 
     if data['type'] == 'MOVE':
         snake = session['snake']
@@ -161,9 +150,22 @@ def handle_game_event(data):
         snake_move(snake, new_head)
 
         if is_apple_eaten(new_head, apple):
+            session['apple_times'].append(current_event_time)
+
+            # Calculate average time between collecting 5 apples
+            if len(session['apple_times']) >= 5:
+                times = session['apple_times'][-5:]
+                average_time = (times[-1] - times[0]) / 4
+                if average_time < 0.9:  # Arbitrary threshold for cheating
+                    logger.warning("Possible cheating detected for nickname: %s(%s). Average time: %.2f seconds",
+                                   session['nickname'], client_ip, average_time)
+                    session['invalid_score'] = True
+
             if session['score'] > 390:  # For cheaters
-                setup_for('lost')
-                return
+                session['invalid_score'] = True
+
+                if session['score'] >= 396:
+                    setup_for('lost')
 
             session['score'] += 1
             new_apple = eat_apple(snake)
