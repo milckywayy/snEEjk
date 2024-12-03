@@ -1,17 +1,15 @@
 import os
 import re
-import sqlite3
 import logging
-import ssl
 from datetime import datetime
 
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_socketio import SocketIO, emit
-from game import game_setup, is_apple_eaten, eat_apple, check_collision, snake_move
-from gevent import pywsgi
-from geventwebsocket.handler import WebSocketHandler
+from sqlalchemy import func, desc
 
-# Customize logging format to include the current time
+from model import db, Score
+from game import game_setup, is_apple_eaten, eat_apple, check_collision, snake_move
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -22,24 +20,15 @@ socketio = SocketIO(app, async_mode='gevent')
 if not os.path.exists(app.instance_path):
     os.makedirs(app.instance_path)
 
-DATABASE = os.path.join(app.instance_path, 'scores.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 GAME_TITLE = 'snEEjk'
-VERSION = 'V2.0.5'
+VERSION = 'V2.1.0'
 
-
-def init_db():
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.cursor()
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS scores (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            score INTEGER NOT NULL,
-            nickname VARCHAR(20) NOT NULL
-        )
-        """)
-        conn.commit()
-        logger.info("Database initialized")
+db.init_app(app)
+with app.app_context():
+    db.create_all()
 
 
 @app.route('/')
@@ -56,12 +45,9 @@ def hello_screen():
 
 @app.route('/highscores')
 def highscores_screen():
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.cursor()
-        cursor.execute(
-            'SELECT nickname, MAX(score) as score FROM scores GROUP BY nickname ORDER BY score DESC LIMIT 10')
-        scores = cursor.fetchall()
-    scores = [(nickname.encode('utf-8', errors='replace').decode('utf-8'), score) for nickname, score in scores]
+    scores = db.session.query(Score.nickname, func.max(Score.points).label('score')).group_by(Score.nickname).order_by(desc('score')).limit(10).all()
+
+    scores = [(nickname.encode('utf-8', errors='replace').decode('utf-8'), points) for nickname, points in scores]
     logger.info("Rendering highscores screen with scores: %s", scores)
     return render_template('highscores.html', game_title=GAME_TITLE, scores=scores, game_version=VERSION)
 
@@ -161,9 +147,6 @@ def handle_game_event(data):
                                    session['nickname'], client_ip, average_time)
                     session['invalid_score'] = True
 
-            if session['score'] > 390:  # For cheaters
-                session['invalid_score'] = True
-
                 if session['score'] >= 396:
                     setup_for('lost')
 
@@ -184,20 +167,13 @@ def save_score(nickname, score, duration, client_ip):
         logger.warning("Possible cheating detected for nickname: %s(%s). Score: %d, Duration: %.2f", nickname,
                        client_ip, score, duration)
         return
-    with sqlite3.connect(DATABASE) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO scores (nickname, score) VALUES (?, ?)
-        ''', (nickname, score))
-        conn.commit()
+
+    score = Score(
+        points=score,
+        nickname=nickname,
+    )
+
+    db.session.add(score)
+    db.session.commit()
+
     logger.info("Score saved for: %s(%s), score: %d", nickname, client_ip, score)
-
-
-init_db()
-if __name__ == '__main__':
-    logger.info("Starting server")
-    context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-    context.load_cert_chain('fullchain.pem', 'privkey.pem')
-
-    http_server = pywsgi.WSGIServer(('0.0.0.0', 5050), app, handler_class=WebSocketHandler, ssl_context=context)
-    http_server.serve_forever()

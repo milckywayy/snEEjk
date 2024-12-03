@@ -1,4 +1,5 @@
-instance/scores.db
-fullchain.pem
-privkey.pem
+instance/database.db
+.venv
+*.pyc
+config/config.json
 nohup.out
