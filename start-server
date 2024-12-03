@@ -1,7 +1,4 @@
 #!/bin/bash
 
-if [ -f "./venv/bin/activate" ]; then
-    source ./venv/bin/activate
-fi
+gunicorn -c gunicorn.conf.py app:app
 
-nohup gunicorn -c gunicorn.conf.py app:app &
