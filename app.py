@@ -159,7 +159,6 @@ def handle_game_event(data):
 
         # Update snake position
         session['snake'] = snake
-        emit('snake_update', {'snake_head_update': snake[0]})
 
 
 def save_score(nickname, score, duration, client_ip):
