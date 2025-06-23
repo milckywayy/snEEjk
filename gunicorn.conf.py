@@ -1,17 +1,12 @@
 import gevent.monkey
-import json
-import os
+
+from utils import read_config
 
 
-if os.path.exists('config/config.json'):
-    with open('config/config.json', 'r') as file:
-        app_config = json.load(file)
-else:
-    with open('config/default_config.json', 'r') as file:
-        app_config = json.load(file)
+app_config = read_config()
 
 gevent.monkey.patch_all()
 
 worker_class = 'geventwebsocket.gunicorn.workers.GeventWebSocketWorker'
-workers = 1
+workers = app_config['workers']
 bind = f"{app_config['app_host']}:{app_config['app_port']}"

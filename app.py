@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 app.secret_key = os.environ.get('SNAKE_SECRET_KEY', os.urandom(24))
 socketio = SocketIO(app, async_mode='gevent')
+# socketio = SocketIO(app, async_mode='eventlet')  # For windows
 
 if not os.path.exists(app.instance_path):
     os.makedirs(app.instance_path)

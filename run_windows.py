@@ -1,25 +1,15 @@
-from waitress import serve
-from gevent import monkey
-from app import app
-import json
-import os
+from app import app, socketio
+import eventlet
+
+from utils import read_config
 
 
-if os.path.exists('config/config.json'):
-    with open('config/config.json', 'r') as file:
-        app_config = json.load(file)
-else:
-    with open('config/default_config.json', 'r') as file:
-        app_config = json.load(file)
+if __name__ == '__main__':
+    app_config = read_config()
 
-
-monkey.patch_all()
-serve(
-    app,
-    host=app_config['app_host'],
-    port=app_config['app_port'],
-    threads=2,
-    backlog=2048,
-    channel_timeout=120,
-    connection_limit=2000,
-)
+    socketio.run(
+        app,
+        host=app_config['app_host'],
+        port=app_config['app_port'],
+        debug=False
+    )

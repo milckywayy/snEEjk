@@ -1,5 +1,6 @@
 instance/database.db
 .venv
+.idea
 *.pyc
 config/config.json
 nohup.out
