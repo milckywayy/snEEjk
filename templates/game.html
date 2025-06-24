@@ -9,11 +9,14 @@
 
 </head>
 <body>
-    <button id="inGameBackButton" class="back-button" onclick="window.location.href='{{ url_for('login_screen') }}'">Exit game</button>
+    <button id="inGameBackButton" class="back-button" onclick="window.location.href='{{ url_for('home_screen') }}'">Exit game</button>
 
     <canvas id="game"></canvas>
     <script src="{{ url_for('static', filename='js/game.js') }}"></script>
 
+    {% if 'logged_in' in session %}
+        <div id="player-label"> Logged in as {{ session['user']['first_name'] + ' ' + session['user']['last_name'] }}</div>
+    {% endif %}
     <div id="game-version">{{ game_version }}</div>
 
 </body>

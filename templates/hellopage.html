@@ -9,9 +9,12 @@
 
     <div class="container" id="game-container" style="padding:50px">
         <h1 id="game-title">{{ game_title }}</h1>
-        <button id="highscores-button" onclick="window.open('{{ url_for('login_screen') }}', '_blank')">Play now</button>
+        <button id="highscores-button" onclick="window.open('{{ url_for('home_screen') }}', '_blank')">Play now</button>
     </div>
 
+    {% if 'logged_in' in session %}
+        <div id="player-label"> Logged in as {{ session['user']['first_name'] + ' ' + session['user']['last_name'] }}</div>
+    {% endif %}
     <div id="game-version">{{ game_version }}</div>
 
 </body>

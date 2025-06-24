@@ -18,8 +18,11 @@
             {% endfor %}
         </ul>
 
-        <button class="back-button" onclick="window.location.href='{{ url_for('login_screen') }}'">Back</button>
+        <button class="back-button" onclick="window.location.href='{{ url_for('home_screen') }}'">Back</button>
 
+        {% if 'logged_in' in session %}
+            <div id="player-label"> Logged in as {{ session['user']['first_name'] + ' ' + session['user']['last_name'] }}</div>
+        {% endif %}
         <div id="game-version">{{ game_version }}</div>
 
     </div>
